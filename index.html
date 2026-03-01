@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wikipedia — Redesigned</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --border: #2a2a2a;
+    --text: #e8e2d9;
+    --muted: #6b6560;
+    --accent: #c9a84c;
+    --accent2: #e85d3a;
+    --white: #f5f0e8;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  .cursor {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, width 0.3s, height 0.3s, background 0.3s;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease-out, width 0.3s, height 0.3s, opacity 0.3s;
+    opacity: 0.5;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9997;
+    opacity: 0.4;
+  }
+
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    background: linear-gradient(180deg, rgba(13,13,13,0.95) 0%, transparent 100%);
+    backdrop-filter: blur(2px);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    text-decoration: none;
+  }
+
+  .nav-logo-w {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -1px;
+  }
+
+  .nav-logo-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  .nav-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 8px 16px;
+    transition: border-color 0.3s;
+  }
+
+  .nav-search:focus-within { border-color: var(--accent); }
+
+  .nav-search input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    width: 180px;
+  }
+
+  .nav-search input::placeholder { color: var(--muted); }
+  .nav-search svg { color: var(--muted); flex-shrink: 0; }
+
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 120px 64px 80px 48px;
+    position: relative;
+    z-index: 2;
+    border-right: 1px solid var(--border);
+  }
+
+  .hero-issue {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-issue::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .hero-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(52px, 6vw, 88px);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -2px;
+    color: var(--white);
+    margin-bottom: 32px;
+  }
+
+  .hero-headline em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 440px;
+    margin-bottom: 48px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--white);
+    display: block;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+    display: block;
+  }
+
+  .hero-right { position: relative; overflow: hidden; }
+
+  .hero-featured-article {
+    position: absolute;
+    inset: 0;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 64px 48px;
+    overflow: hidden;
+  }
+
+  .hero-featured-article::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 80% 20%, rgba(201, 168, 76, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 20% 80%, rgba(232, 93, 58, 0.06) 0%, transparent 60%);
+  }
+
+  .article-category {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .article-title-featured {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    color: var(--white);
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .article-excerpt {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--muted);
+    margin-bottom: 32px;
+    position: relative;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .article-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    border: 1px solid var(--accent);
+    padding: 12px 24px;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .read-btn:hover { background: var(--accent); color: var(--bg); }
+
+  .article-langs {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .hero-bg-number {
+    position: absolute;
+    top: -20px; right: -40px;
+    font-family: 'Playfair Display', serif;
+    font-size: 280px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.015);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .ticker {
+    background: var(--accent);
+    padding: 10px 0;
+    overflow: hidden;
+  }
+
+  .ticker-inner {
+    display: flex;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  .ticker-item {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--bg);
+    padding: 0 32px;
+    flex-shrink: 0;
+  }
+
+  .ticker-divider { color: rgba(13,13,13,0.4); padding: 0 8px; }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  main { max-width: 1400px; margin: 0 auto; padding: 80px 48px; }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -1px;
+  }
+
+  .section-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .article-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 80px;
+  }
+
+  .article-card {
+    background: var(--bg);
+    padding: 40px;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+  }
+
+  .article-card:hover { background: var(--surface); }
+  .article-card.featured { grid-row: span 2; padding: 48px; }
+  .article-card.featured .card-title { font-size: 32px; }
+
+  .card-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--white);
+    margin-bottom: 12px;
+    transition: color 0.3s;
+  }
+
+  .article-card:hover .card-title { color: var(--accent); }
+
+  .card-excerpt {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  .card-footer {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .card-index {
+    position: absolute;
+    bottom: 16px; right: 20px;
+    font-family: 'Playfair Display', serif;
+    font-size: 80px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.025);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .lang-section { margin-bottom: 80px; }
+
+  .lang-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .lang-card {
+    background: var(--bg);
+    padding: 32px 28px;
+    transition: background 0.4s;
+    cursor: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .lang-card:hover { background: var(--surface2); }
+  .lang-card:hover .lang-name { color: var(--accent); }
+
+  .lang-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+    transition: color 0.3s;
+  }
+
+  .lang-native {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .lang-count {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+
+  .lang-count-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .lang-bar {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0;
+  }
+
+  .lang-card.visible .lang-bar { width: var(--bar-width, 60%); }
+
+  .articles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 80px;
+  }
+
+  .list-item {
+    background: var(--bg);
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    align-items: center;
+    gap: 32px;
+    padding: 28px 40px;
+    transition: background 0.3s;
+    cursor: none;
+  }
+
+  .list-item:hover { background: var(--surface); }
+
+  .list-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--border);
+    text-align: center;
+    transition: color 0.3s;
+  }
+
+  .list-item:hover .list-num { color: var(--accent); }
+
+  .list-content h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .list-content p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .list-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 64px 48px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 64px;
+  }
+
+  .footer-brand .nav-logo-w { font-size: 40px; display: block; margin-bottom: 8px; }
+
+  .footer-tagline {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .footer-desc { font-size: 13px; line-height: 1.7; color: var(--muted); max-width: 280px; }
+
+  .footer-col h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+
+  .footer-col a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.3s; }
+  .footer-col a:hover { color: var(--white); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding: 24px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-bottom p { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--muted); }
+
+  .footer-bottom-links { display: flex; gap: 24px; list-style: none; }
+
+  .footer-bottom-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .footer-bottom-links a:hover { color: var(--accent); }
+
+  .fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 1024px) {
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { height: 50vh; }
+    .hero-left { padding: 100px 24px 60px; }
+    main { padding: 60px 24px; }
+    .article-grid { grid-template-columns: 1fr 1fr; }
+    .article-card.featured { grid-column: span 2; grid-row: span 1; }
+    .lang-grid { grid-template-columns: repeat(3, 1fr); }
+    footer { grid-template-columns: 1fr 1fr; padding: 40px 24px; }
+    .footer-bottom { padding: 20px 24px; flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <a href="#" class="nav-logo">
+    <span class="nav-logo-w">Wikipedia</span>
+    <span class="nav-logo-tag">The Free Encyclopedia</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Explore</a></li>
+    <li><a href="#">Featured</a></li>
+    <li><a href="#">On This Day</a></li>
+    <li><a href="#">Languages</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+  <div class="nav-search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search 6.7M articles...">
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-issue">Today's Edition — March 2026</div>
+    <h1 class="hero-headline">The World's<br><em>Free</em><br>Encyclopedia</h1>
+    <p class="hero-desc">Over 60 million articles across 300+ languages, written collaboratively by volunteers worldwide. Knowledge that belongs to everyone.</p>
+    <div class="hero-stats">
+      <div>
+        <span class="stat-number">6.7M</span>
+        <span class="stat-label">English Articles</span>
+      </div>
+      <div>
+        <span class="stat-number">300+</span>
+        <span class="stat-label">Languages</span>
+      </div>
+      <div>
+        <span class="stat-number">63M</span>
+        <span class="stat-label">Total Articles</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-featured-article">
+      <span class="hero-bg-number">W</span>
+      <span class="article-category">Featured Article</span>
+      <h2 class="article-title-featured">The Theory of<br>General Relativity</h2>
+      <p class="article-excerpt">Albert Einstein's geometric theory of gravitation, published in 1915, fundamentally altered our understanding of space, time, and the nature of the cosmos. It supplanted Newton's law of universal gravitation, providing unified descriptions of gravity as a geometric property of spacetime.</p>
+      <div class="article-meta">
+        <a href="#" class="read-btn">Read Article →</a>
+        <span class="article-langs">Available in 180 languages</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">Today in History <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Featured Article: General Relativity <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Picture of the Day <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Did You Know? <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">New Articles Added Today <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Recently Updated <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Today in History <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Featured Article: General Relativity <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Picture of the Day <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Did You Know? <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">New Articles Added Today <span class="ticker-divider">◆</span></span>
+    <span class="ticker-item">Recently Updated <span class="ticker-divider">◆</span></span>
+  </div>
+</div>
+
+<main>
+  <div class="section-header fade-up">
+    <h2 class="section-title">Explore Knowledge</h2>
+    <span class="section-count">6,700,000+ Articles</span>
+  </div>
+
+  <div class="article-grid fade-up">
+    <div class="article-card featured">
+      <span class="card-tag">Science & Technology</span>
+      <h3 class="card-title">Artificial Intelligence:<br>A History of Thinking Machines</h3>
+      <p class="card-excerpt">From Alan Turing's foundational question "Can machines think?" to modern large language models, the journey of artificial intelligence spans decades of theoretical breakthroughs, winters of disillusionment, and springs of remarkable progress. Today, AI touches nearly every aspect of human life.</p>
+      <div class="card-footer">
+        <span>Last edited 2 hours ago</span>
+        <span>482 references</span>
+      </div>
+      <span class="card-index">01</span>
+    </div>
+    <div class="article-card">
+      <span class="card-tag">History</span>
+      <h3 class="card-title">The Renaissance: Rebirth of European Culture</h3>
+      <p class="card-excerpt">A cultural and intellectual movement spanning the 14th to 17th centuries that profoundly altered art, science, and human philosophy.</p>
+      <div class="card-footer"><span>Featured</span><span>320 refs</span></div>
+      <span class="card-index">02</span>
+    </div>
+    <div class="article-card">
+      <span class="card-tag">Natural World</span>
+      <h3 class="card-title">Deep Ocean: Earth's Final Frontier</h3>
+      <p class="card-excerpt">More than 80% of the world's oceans remain unexplored. The deep sea harbors creatures and ecosystems alien to our surface world.</p>
+      <div class="card-footer"><span>Good Article</span><span>214 refs</span></div>
+      <span class="card-index">03</span>
+    </div>
+    <div class="article-card">
+      <span class="card-tag">Arts & Culture</span>
+      <h3 class="card-title">Jazz: America's Classical Music</h3>
+      <p class="card-excerpt">Emerging from African American communities in New Orleans in the late 19th and early 20th centuries, jazz became one of the first truly American art forms.</p>
+      <div class="card-footer"><span>Featured</span><span>178 refs</span></div>
+      <span class="card-index">04</span>
+    </div>
+    <div class="article-card">
+      <span class="card-tag">Philosophy</span>
+      <h3 class="card-title">Stoicism and the Art of Living</h3>
+      <p class="card-excerpt">Ancient Greek philosophy that taught the development of self-control and mental fortitude as a means to overcome destructive emotions.</p>
+      <div class="card-footer"><span>Good Article</span><span>143 refs</span></div>
+      <span class="card-index">05</span>
+    </div>
+  </div>
+
+  <div class="section-header fade-up">
+    <h2 class="section-title">Trending Today</h2>
+    <span class="section-count">Updated hourly</span>
+  </div>
+
+  <div class="articles-list fade-up">
+    <div class="list-item">
+      <span class="list-num">01</span>
+      <div class="list-content">
+        <h3>Black Holes and Event Horizons</h3>
+        <p>A region of spacetime where gravity is so strong that nothing — including light — can escape its pull once it crosses the boundary.</p>
+      </div>
+      <span class="list-tag">Physics</span>
+    </div>
+    <div class="list-item">
+      <span class="list-num">02</span>
+      <div class="list-content">
+        <h3>The Human Genome Project</h3>
+        <p>The international scientific research project that completed sequencing the human genome, fundamentally changing medicine and biology.</p>
+      </div>
+      <span class="list-tag">Biology</span>
+    </div>
+    <div class="list-item">
+      <span class="list-num">03</span>
+      <div class="list-content">
+        <h3>Ancient Rome: Republic to Empire</h3>
+        <p>One of the most extensive and enduring empires in history, whose legacy forms the bedrock of Western civilization.</p>
+      </div>
+      <span class="list-tag">History</span>
+    </div>
+    <div class="list-item">
+      <span class="list-num">04</span>
+      <div class="list-content">
+        <h3>Quantum Entanglement</h3>
+        <p>"Spooky action at a distance" — Einstein's dismissive phrase for a quantum phenomenon now proven and utilized in computing.</p>
+      </div>
+      <span class="list-tag">Physics</span>
+    </div>
+    <div class="list-item">
+      <span class="list-num">05</span>
+      <div class="list-content">
+        <h3>The Silk Road</h3>
+        <p>Ancient network of trade routes that connected the East and West, facilitating the exchange of goods, ideas, and cultures for centuries.</p>
+      </div>
+      <span class="list-tag">History</span>
+    </div>
+  </div>
+
+  <div class="section-header fade-up">
+    <h2 class="section-title">Languages</h2>
+    <span class="section-count">300+ editions</span>
+  </div>
+
+  <div class="lang-section">
+    <div class="lang-grid fade-up">
+      <div class="lang-card" style="--bar-width: 100%">
+        <div class="lang-name">English</div>
+        <div class="lang-native">English</div>
+        <span class="lang-count">6.7M</span>
+        <span class="lang-count-label">Articles</span>
+        <div class="lang-bar"></div>
+      </div>
+      <div class="lang-card" style="--bar-width: 38%">
+        <div class="lang-name">German</div>
+        <div class="lang-native">Deutsch</div>
+        <span class="lang-count">2.9M</span>
+        <span class="lang-count-label">Articles</span>
+        <div class="lang-bar"></div>
+      </div>
+      <div class="lang-card" style="--bar-width: 31%">
+        <div class="lang-name">French</div>
+        <div class="lang-native">Français</div>
+        <span class="lang-count">2.4M</span>
+        <span class="lang-count-label">Articles</span>
+        <div class="lang-bar"></div>
+      </div>
+      <div class="lang-card" style="--bar-width: 28%">
+        <div class="lang-name">Spanish</div>
+        <div class="lang-native">Español</div>
+        <span class="lang-count">1.9M</span>
+        <span class="lang-count-label">Articles</span>
+        <div class="lang-bar"></div>
+      </div>
+      <div class="lang-card" style="--bar-width: 24%">
+        <div class="lang-name">Japanese</div>
+        <div class="lang-native">日本語</div>
+        <span class="lang-count">1.4M</span>
+        <span class="lang-count-label">Articles</span>
+        <div class="lang-bar"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-brand">
+    <span class="nav-logo-w">Wikipedia</span>
+    <p class="footer-tagline">The Free Encyclopedia</p>
+    <p class="footer-desc">Wikipedia is a free-content online encyclopedia written and maintained by a community of volunteers through open collaboration and a wiki-based editing system.</p>
+  </div>
+  <div class="footer-col">
+    <h4>Explore</h4>
+    <ul>
+      <li><a href="#">Featured Content</a></li>
+      <li><a href="#">Current Events</a></li>
+      <li><a href="#">Random Article</a></li>
+      <li><a href="#">New Pages</a></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>Community</h4>
+    <ul>
+      <li><a href="#">How to Contribute</a></li>
+      <li><a href="#">Community Portal</a></li>
+      <li><a href="#">Style Guide</a></li>
+      <li><a href="#">Policies</a></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>Foundation</h4>
+    <ul>
+      <li><a href="#">About Wikipedia</a></li>
+      <li><a href="#">Wikimedia Foundation</a></li>
+      <li><a href="#">Donate</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </div>
+</footer>
+
+<div class="footer-bottom">
+  <p>© 2026 Wikimedia Foundation, Inc. — Content available under CC BY-SA 4.0</p>
+  <ul class="footer-bottom-links">
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms of Use</a></li>
+    <li><a href="#">Cookie Statement</a></li>
+    <li><a href="#">Desktop</a></li>
+  </ul>
+</div>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+
+  function animRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+
+  document.querySelectorAll('a, button, input, .article-card, .lang-card, .list-item').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.width = '20px';
+      cursor.style.height = '20px';
+      ring.style.width = '60px';
+      ring.style.height = '60px';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.width = '10px';
+      cursor.style.height = '10px';
+      ring.style.width = '36px';
+      ring.style.height = '36px';
+    });
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 60);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  document.querySelectorAll('.lang-card').forEach(el => observer.observe(el));
+
+  const cardObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      document.querySelectorAll('.article-card').forEach((card, i) => {
+        setTimeout(() => {
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, i * 80);
+      });
+    }
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.article-card').forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease, background 0.3s';
+  });
+
+  const firstCard = document.querySelector('.article-card');
+  if (firstCard) cardObserver.observe(firstCard.closest('.article-grid'));
+
+  document.querySelectorAll('.list-item').forEach((item, i) => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(-20px)';
+    item.style.transition = `opacity 0.5s ease ${i * 0.08}s, transform 0.5s ease ${i * 0.08}s, background 0.3s`;
+  });
+
+  const listObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      document.querySelectorAll('.list-item').forEach(item => {
+        item.style.opacity = '1';
+        item.style.transform = 'translateX(0)';
+      });
+    }
+  }, { threshold: 0.1 });
+
+  const listEl = document.querySelector('.articles-list');
+  if (listEl) listObserver.observe(listEl);
+</script>
+</body>
+</html>
